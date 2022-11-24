@@ -1,59 +1,48 @@
-library(data.table)
-
-library(zoo)
-
-x <- c(3, 4, 1, 4, 8)
-dt <- seq(as.Date("2018-01-01"), as.Date("2018-01-05"), by = "days")
-
-ts <- zoo(x, dt)
-print(ts)
-
-library(xts)
-
-ts <- xts(x, dt)
-print(ts)
-
-prices <- c(132.45, 130.85, 130.00, 129.55, 130.85)
-dates <- as.Date(c(
-  "2010-01-04", "2010-01-05", "2010-01-06",
-  "2010-01-07", "2010-01-08"
-))
-ibm.daily <- zoo(prices, dates)
-print(ibm.daily)
-
-prices <- c(131.18, 131.20, 131.17, 131.15, 131.17)
-seconds <- c(9.5, 9.500278, 9.500556, 9.500833, 9.501111)
-ibm.sec <- zoo(prices, seconds)
-print(ibm.sec)
-
-ts <- zoo(x, dt)
-
-coredata(ts)
-
-coredata(ibm.daily)
-
-index(ibm.daily)
-
-# load data
-IBM = data.table::fread("C:/Users/syedi/time-series-analysis/data/sp500data.csv")
+library(quantmod)
+library(ggplot2)
+library(forecast)
+library(tseries)
 
 
-# create new variables
-price = IBM$Close
-price_AdjC = IBM$`Adj Close`
-dt = as.Date(IBM$Date)
-dt = na.omit(dt)
-dt = append(dt,as.Date('2000-01-02'))
-price = append(price, 1,399.42)
-# let's create a TS object as in the lecture notes:
-library(xts)
-# xts ()
-ts = xts(price,dt)
+getSymbols('^GSPC', src="yahoo", from = '2009-01-01', to = '2020-12-31')
+head(GSPC$GSPC.Close)
+class(GSPC$GSPC.Close)
 
-# Plot the xts object
-#main_title = "IBM: Historical Data"
-#plot(ts, main = main_title, lty = "solid")
+plot(GSPC$GSPC.Close)
+acf(GSPC$GSPC.Close)
+pacf(GSPC$GSPC.Close)
+adf.test(GSPC$GSPC.Close)
+model = auto.arima(GSPC$GSPC.Close, ic = 'aic', trace = TRUE)
+model
+acf(ts(model$residuals))
+pacf(ts(model$residuals))
+myforecast = forecast(model, level = c(95), h=5*4)
+plot(myforecast)
 
-first(ts,"2 week") # first two weeks
-last(ts,"month")
+GSPC.returns <- diff(log(GSPC$GSPC.Close), na.rm=TRUE)
+plot(GSPC.returns, main="Daily S&P500", xlab="Time")
+head(GSPC.returns, na.rm=TRUE)
+
+head(GSPC.returns)
+#head(GSPC.whiteN)
+Box.test(GSPC$GSPC.Close,lag=10,type="Ljung-Box")
+Box.test(GSPC.returns,lag=10,type="Ljung-Box")
+
+library(fBasics)
+options(scipen = 999)
+library(tseries)
+basicStats(GSPC)
+adf.test(GSPC$GSPC.Close)
+lnclose = log(GSPC$GSPC.Close)
+View(lnclose)
+adf.test(lnclose)
+
+install.packages('dplyr')
+install.packages('ggpubr')
+
+library(dplyr)
+library(ggpubr)
+ggdensity(as.vector(GSPC$GSPC.Close))
+ggqqplot(as.vector(GSPC$GSPC.Close))
+shapiro.test(as.vector(GSPC$GSPC.Close))
 
